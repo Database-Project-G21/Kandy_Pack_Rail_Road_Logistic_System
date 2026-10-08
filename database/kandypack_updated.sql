@@ -357,4 +357,24 @@ ALTER TABLE ONLY public.truck
 
 
 
+-- ===== Person 2 additions =====
+ALTER TABLE ONLY public.staff_user ADD CONSTRAINT staff_user_role_check CHECK (((role)::text = ANY (ARRAY[('ADMIN'::character varying)::text, ('DISPATCHER'::character varying)::text, ('STORE_MANAGER'::character varying)::text, ('DRIVER'::character varying)::text])));
+
+--
+-- Name: staff_user staff_user_email_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.staff_user
+    ADD CONSTRAINT staff_user_email_key UNIQUE (email);
+
+
+--
+-- Name: customer uq_customer_email; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.customer
+    ADD CONSTRAINT uq_customer_email UNIQUE (email);
+
+
+
 COMMIT;
