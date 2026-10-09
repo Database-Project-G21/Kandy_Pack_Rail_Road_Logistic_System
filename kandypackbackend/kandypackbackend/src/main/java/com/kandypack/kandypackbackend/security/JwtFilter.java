@@ -24,6 +24,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
+
+            if (jwtUtil.isTokenValid(token)) {
+                String id = jwtUtil.extractId(token);
+                String role = jwtUtil.extractRole(token);
+            }
         }
 
         filterChain.doFilter(request, response);
