@@ -1,4 +1,4 @@
--- Kandypack cumulative snapshot: Person 1 (Persons 1 through 1).
+-- Kandypack cumulative snapshot: Person 3 (Persons 1 through 3).
 -- Restore ONLY into a NEW EMPTY database with psql -v ON_ERROR_STOP=1 -f this_file.sql
 -- These are alternative full snapshots, NOT sequential migrations.
 -- Persons 1-4 contain schema only; Person 5 includes the original demo data.
@@ -374,6 +374,192 @@ ALTER TABLE ONLY public.staff_user
 
 ALTER TABLE ONLY public.customer
     ADD CONSTRAINT uq_customer_email UNIQUE (email);
+
+
+
+-- ===== Person 3 additions =====
+ALTER TABLE ONLY public.assistant ADD CONSTRAINT assistant_weekly_hours_logged_check CHECK ((weekly_hours_logged <= 60.00));
+
+ALTER TABLE ONLY public.customer_order ADD CONSTRAINT chk_delivery_lead_time CHECK ((delivery_date >= (placement_date + '7 days'::interval)));
+
+ALTER TABLE ONLY public.customer_order ADD CONSTRAINT customer_order_amount_check CHECK ((amount >= (0)::numeric));
+
+ALTER TABLE ONLY public.customer_order ADD CONSTRAINT customer_order_status_check CHECK (((status)::text = ANY (ARRAY[('placed'::character varying)::text, ('scheduled'::character varying)::text, ('dispatched'::character varying)::text, ('delivered'::character varying)::text, ('cancelled'::character varying)::text])));
+
+ALTER TABLE ONLY public.driver ADD CONSTRAINT driver_weekly_hours_logged_check CHECK ((weekly_hours_logged <= 40.00));
+
+ALTER TABLE ONLY public.order_item ADD CONSTRAINT order_item_price_check CHECK ((price >= (0)::numeric));
+
+ALTER TABLE ONLY public.order_item ADD CONSTRAINT order_item_quantity_check CHECK ((quantity > 0));
+
+ALTER TABLE ONLY public.order_trip_item ADD CONSTRAINT order_trip_item_quantity_check CHECK ((quantity > 0));
+
+ALTER TABLE ONLY public.order_trip_item ADD CONSTRAINT order_trip_item_space_per_unit_check CHECK ((space_per_unit > (0)::numeric));
+
+ALTER TABLE ONLY public.product ADD CONSTRAINT product_price_check CHECK ((price >= (0)::numeric));
+
+ALTER TABLE ONLY public.product ADD CONSTRAINT product_space_consumption_check CHECK ((space_consumption > (0)::numeric));
+
+ALTER TABLE ONLY public.route ADD CONSTRAINT route_max_delivery_time_check CHECK ((max_delivery_time > (0)::numeric));
+
+ALTER TABLE ONLY public.train_schedule ADD CONSTRAINT chk_train_times CHECK ((arrival_datetime > departure_datetime));
+
+ALTER TABLE ONLY public.train_schedule ADD CONSTRAINT chk_trip_capacity_bounds CHECK (((allocated_capacity >= (0)::numeric) AND (available_capacity <= allocated_capacity)));
+
+ALTER TABLE ONLY public.train_schedule ADD CONSTRAINT train_schedule_available_capacity_check CHECK ((available_capacity >= (0)::numeric));
+
+ALTER TABLE ONLY public.truck_dispatch ADD CONSTRAINT chk_dispatch_times CHECK ((end_time > start_time));
+
+--
+-- Name: customer customer_city_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.customer
+    ADD CONSTRAINT customer_city_id_fkey FOREIGN KEY (city_id) REFERENCES public.city(city_id);
+
+
+--
+-- Name: customer_order customer_order_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.customer_order
+    ADD CONSTRAINT customer_order_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.customer(customer_id);
+
+
+--
+-- Name: order_item order_item_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.order_item
+    ADD CONSTRAINT order_item_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.customer_order(order_id);
+
+
+--
+-- Name: order_item order_item_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.order_item
+    ADD CONSTRAINT order_item_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.product(product_id);
+
+
+--
+-- Name: order_travel order_travel_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.order_travel
+    ADD CONSTRAINT order_travel_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.customer_order(order_id);
+
+
+--
+-- Name: order_travel order_travel_route_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.order_travel
+    ADD CONSTRAINT order_travel_route_id_fkey FOREIGN KEY (route_id) REFERENCES public.route(route_id);
+
+
+--
+-- Name: order_travel order_travel_trip_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.order_travel
+    ADD CONSTRAINT order_travel_trip_id_fkey FOREIGN KEY (trip_id) REFERENCES public.train_schedule(trip_id);
+
+
+--
+-- Name: order_trip_item order_trip_item_order_id_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.order_trip_item
+    ADD CONSTRAINT order_trip_item_order_id_product_id_fkey FOREIGN KEY (order_id, product_id) REFERENCES public.order_item(order_id, product_id);
+
+
+--
+-- Name: order_trip_item order_trip_item_order_id_trip_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.order_trip_item
+    ADD CONSTRAINT order_trip_item_order_id_trip_id_fkey FOREIGN KEY (order_id, trip_id) REFERENCES public.order_travel(order_id, trip_id);
+
+
+--
+-- Name: route route_store_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.route
+    ADD CONSTRAINT route_store_id_fkey FOREIGN KEY (store_id) REFERENCES public.store(store_id);
+
+
+--
+-- Name: store store_city_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.store
+    ADD CONSTRAINT store_city_id_fkey FOREIGN KEY (city_id) REFERENCES public.city(city_id);
+
+
+--
+-- Name: train_schedule train_schedule_city_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.train_schedule
+    ADD CONSTRAINT train_schedule_city_id_fkey FOREIGN KEY (city_id) REFERENCES public.city(city_id);
+
+
+--
+-- Name: train_schedule train_schedule_store_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.train_schedule
+    ADD CONSTRAINT train_schedule_store_id_fkey FOREIGN KEY (store_id) REFERENCES public.store(store_id);
+
+
+--
+-- Name: train_schedule train_schedule_train_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.train_schedule
+    ADD CONSTRAINT train_schedule_train_id_fkey FOREIGN KEY (train_id) REFERENCES public.train(train_id);
+
+
+--
+-- Name: truck_dispatch truck_dispatch_assistant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.truck_dispatch
+    ADD CONSTRAINT truck_dispatch_assistant_id_fkey FOREIGN KEY (assistant_id) REFERENCES public.assistant(assistant_id);
+
+
+--
+-- Name: truck_dispatch truck_dispatch_driver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.truck_dispatch
+    ADD CONSTRAINT truck_dispatch_driver_id_fkey FOREIGN KEY (driver_id) REFERENCES public.driver(driver_id);
+
+
+--
+-- Name: truck_dispatch truck_dispatch_route_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.truck_dispatch
+    ADD CONSTRAINT truck_dispatch_route_id_fkey FOREIGN KEY (route_id) REFERENCES public.route(route_id);
+
+
+--
+-- Name: truck_dispatch truck_dispatch_truck_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.truck_dispatch
+    ADD CONSTRAINT truck_dispatch_truck_id_fkey FOREIGN KEY (truck_id) REFERENCES public.truck(truck_id);
+
+
+--
+-- Name: truck truck_store_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.truck
+    ADD CONSTRAINT truck_store_id_fkey FOREIGN KEY (store_id) REFERENCES public.store(store_id);
 
 
 
