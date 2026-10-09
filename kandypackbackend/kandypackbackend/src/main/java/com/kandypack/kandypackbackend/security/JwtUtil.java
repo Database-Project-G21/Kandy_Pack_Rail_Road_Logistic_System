@@ -10,11 +10,8 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    private final SecretKey key =
-            Keys.secretKeyFor(io.jsonwebtoken.SignatureAlgorithm.HS256);
-
-    private final long EXPIRATION_MS =
-            1000 * 60 * 60 * 24;
+    private final SecretKey key = Keys.secretKeyFor(io.jsonwebtoken.SignatureAlgorithm.HS256);
+    private final long EXPIRATION_MS = 1000 * 60 * 60 * 24; // 24 hours
 
     public String generateToken(String id, String role) {
         return Jwts.builder()
@@ -46,11 +43,7 @@ public class JwtUtil {
 
     public boolean isTokenValid(String token) {
         try {
-            Jwts.parser()
-                    .verifyWith(key)
-                    .build()
-                    .parseSignedClaims(token);
-
+            Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
             return true;
         } catch (Exception e) {
             return false;
