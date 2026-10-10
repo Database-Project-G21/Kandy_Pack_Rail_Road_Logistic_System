@@ -933,4 +933,28 @@ BEGIN
     RETURN NEW;
 END;
 $$;
+
+--
+-- Name: trg_fn_assistant_no_overlap(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.trg_fn_assistant_no_overlap() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    conflict_count INT;
+BEGIN
+    SELECT COUNT(*) INTO conflict_count
+    FROM TRUCK_DISPATCH
+    WHERE assistant_id = NEW.assistant_id
+    AND NEW.start_time < end_time
+    AND NEW.end_time > start_time;
+
+    IF conflict_count > 0 THEN
+        RAISE EXCEPTION 'Assistant already has an overlapping dispatch';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
 COMMIT;
