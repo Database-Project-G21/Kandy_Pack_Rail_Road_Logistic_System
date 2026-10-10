@@ -1037,4 +1037,78 @@ BEGIN
 END;
 $$;
 
+--
+-- Name: trg_fn_driver_no_overlap(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.trg_fn_driver_no_overlap() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    conflict_count INT;
+BEGIN
+    SELECT COUNT(*) INTO conflict_count
+    FROM TRUCK_DISPATCH
+    WHERE driver_id = NEW.driver_id
+    AND NEW.start_time < end_time
+    AND NEW.end_time > start_time;
+
+    IF conflict_count > 0 THEN
+        RAISE EXCEPTION 'Driver already has an overlapping dispatch';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: trg_fn_driver_weekly_hours(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.trg_fn_driver_weekly_hours() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    total_hours DECIMAL(6,2);
+BEGIN
+    SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time)) / 3600), 0)
+    INTO total_hours
+    FROM TRUCK_DISPATCH
+    WHERE driver_id = NEW.driver_id
+    AND date_trunc('week', start_time) = date_trunc('week', NEW.start_time);
+
+    IF total_hours + (EXTRACT(EPOCH FROM (NEW.end_time - NEW.start_time)) / 3600) > 40 THEN
+        RAISE EXCEPTION 'Driver weekly hour limit (40 hrs) exceeded';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: trg_fn_truck_no_overlap(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.trg_fn_truck_no_overlap() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    conflict_count INT;
+BEGIN
+    SELECT COUNT(*) INTO conflict_count
+    FROM TRUCK_DISPATCH
+    WHERE truck_id = NEW.truck_id
+    AND NEW.start_time < end_time
+    AND NEW.end_time > start_time;
+
+    IF conflict_count > 0 THEN
+        RAISE EXCEPTION 'Truck already has an overlapping dispatch';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
 COMMIT;
