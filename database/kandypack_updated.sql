@@ -829,3 +829,85 @@ BEGIN
     END IF;
     RETURN NEW;
 END $$;
+
+--
+-- Name: kp_reserve_train_space(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.kp_reserve_train_space() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    v_status varchar(20);
+    v_order_qty integer;
+    v_assigned_qty bigint;
+    v_space numeric;
+    v_delivery date;
+    v_customer_city varchar(10);
+    v_route_store varchar(10);
+    v_route_city varchar(10);
+    v_max_hours numeric;
+    v_trip public.train_schedule%ROWTYPE;
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        RAISE EXCEPTION 'Keep allocation history. Cancel an eligible order to release its reservation.' USING ERRCODE = '23514';
+    END IF;
+
+    SELECT co.status, co.delivery_date, c.city_id
+    INTO v_status, v_delivery, v_customer_city
+    FROM public.customer_order co JOIN public.customer c USING (customer_id)
+    WHERE co.order_id = NEW.order_id FOR UPDATE OF co;
+
+    IF TG_OP = 'UPDATE' THEN
+        IF ROW(NEW.order_id, NEW.trip_id, NEW.product_id, NEW.quantity, NEW.space_per_unit)
+           IS DISTINCT FROM ROW(OLD.order_id, OLD.trip_id, OLD.product_id, OLD.quantity, OLD.space_per_unit)
+           OR OLD.reservation_active = false OR NEW.reservation_active = true
+           OR v_status <> 'cancelled' THEN
+            RAISE EXCEPTION 'Allocation rows are immutable; only cancellation can release reservations.' USING ERRCODE = '23514';
+        END IF;
+        UPDATE public.train_schedule
+        SET available_capacity = available_capacity + OLD.quantity * OLD.space_per_unit
+        WHERE trip_id = OLD.trip_id;
+        RETURN NEW;
+    END IF;
+
+    IF v_status IS DISTINCT FROM 'placed' OR NOT NEW.reservation_active THEN
+        RAISE EXCEPTION 'Only a placed order can receive new train allocations.' USING ERRCODE = '23514';
+    END IF;
+
+    SELECT oi.quantity, p.space_consumption INTO v_order_qty, NEW.space_per_unit
+    FROM public.order_item oi JOIN public.product p USING (product_id)
+    WHERE oi.order_id = NEW.order_id AND oi.product_id = NEW.product_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Order item does not exist.' USING ERRCODE = '23514';
+    END IF;
+    SELECT COALESCE(sum(quantity),0) INTO v_assigned_qty
+    FROM public.order_trip_item WHERE order_id = NEW.order_id AND product_id = NEW.product_id;
+    IF NEW.quantity + v_assigned_qty > v_order_qty THEN
+        RAISE EXCEPTION 'Allocated quantity exceeds the ordered quantity.' USING ERRCODE = '23514';
+    END IF;
+
+    SELECT r.store_id, s.city_id, r.max_delivery_time
+    INTO v_route_store, v_route_city, v_max_hours
+    FROM public.order_travel ot JOIN public.route r USING (route_id)
+    JOIN public.store s ON s.store_id = r.store_id
+    WHERE ot.order_id = NEW.order_id AND ot.trip_id = NEW.trip_id;
+    SELECT * INTO v_trip FROM public.train_schedule WHERE trip_id = NEW.trip_id FOR UPDATE;
+    IF v_route_store IS NULL OR v_trip.trip_id IS NULL
+       OR v_route_store <> v_trip.store_id OR v_route_city <> v_trip.city_id
+       OR v_customer_city <> v_route_city THEN
+        RAISE EXCEPTION 'Customer, route, store and trip destination must match.' USING ERRCODE = '23514';
+    END IF;
+    IF v_trip.departure_datetime <= (clock_timestamp() AT TIME ZONE 'Asia/Colombo')
+       OR v_trip.arrival_datetime + v_max_hours * interval '1 hour' >= (v_delivery + 1)::timestamp THEN
+        RAISE EXCEPTION 'Trip must be in the future and allow delivery by the requested date.' USING ERRCODE = '23514';
+    END IF;
+    v_space := NEW.quantity * NEW.space_per_unit;
+    UPDATE public.train_schedule SET available_capacity = available_capacity - v_space
+    WHERE trip_id = NEW.trip_id AND available_capacity >= v_space;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Insufficient capacity for the requested allocation.' USING ERRCODE = '23514';
+    END IF;
+    RETURN NEW;
+END $$;
+
