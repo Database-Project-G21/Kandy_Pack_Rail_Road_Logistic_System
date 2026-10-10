@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +30,18 @@ export default function Login() {
       const data = await response.json();
 
       if (response.ok) {
-        console.log("Login successful", data);
+        localStorage.setItem("token", data.token);
+        localStorage.setItem(
+          "customerId",
+          data.customerId || data.staffId
+        );
+        localStorage.setItem("role", data.role);
+
+        if (data.role === "CUSTOMER") {
+          router.push("/");
+        } else {
+          router.push("/dashboard");
+        }
       }
     } catch (err) {
       console.error("Login request failed:", err);
