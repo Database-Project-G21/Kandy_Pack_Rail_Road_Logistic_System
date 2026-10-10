@@ -13,6 +13,7 @@ import com.kandypack.kandypackbackend.entity.Customer;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import com.kandypack.kandypackbackend.entity.StaffUser;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -98,6 +99,29 @@ public class AuthController {
             response.put("token", token);
             response.put("customerId", customer.getCustomerId());
             response.put("role", "CUSTOMER");
+
+            return ResponseEntity.ok(response);
+        }
+
+        StaffUser staff =
+                staffUserRepo.findByEmail(request.getEmail()).orElse(null);
+
+        if (staff != null &&
+                encoder.matches(
+                        request.getPassword(),
+                        staff.getPassword()
+                )) {
+
+            String token =
+                    jwtUtil.generateToken(
+                            staff.getStaffId(),
+                            staff.getRole()
+                    );
+
+            Map<String, String> response = new HashMap<>();
+            response.put("token", token);
+            response.put("staffId", staff.getStaffId());
+            response.put("role", staff.getRole());
 
             return ResponseEntity.ok(response);
         }
