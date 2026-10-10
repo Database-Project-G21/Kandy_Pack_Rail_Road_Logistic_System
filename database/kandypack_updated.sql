@@ -911,3 +911,26 @@ BEGIN
     RETURN NEW;
 END $$;
 
+--
+-- Name: trg_fn_assistant_max_consecutive(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.trg_fn_assistant_max_consecutive() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    consecutive_count INT;
+BEGIN
+    SELECT COUNT(*) INTO consecutive_count
+    FROM TRUCK_DISPATCH
+    WHERE assistant_id = NEW.assistant_id
+    AND end_time >= NEW.start_time - INTERVAL '12 hours';
+
+    IF consecutive_count >= 2 THEN
+        RAISE EXCEPTION 'Assistant cannot exceed 2 consecutive route assignments';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+COMMIT;
