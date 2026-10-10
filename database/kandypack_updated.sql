@@ -789,4 +789,43 @@ BEGIN
     END IF;
     RETURN NEW;
 END $$;
-COMMIT;
+
+--
+-- Name: kp_order_status_guard(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.kp_order_status_guard() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NEW.status IS NOT DISTINCT FROM OLD.status THEN RETURN NEW; END IF;
+    IF NOT ((OLD.status = 'placed' AND NEW.status IN ('scheduled','cancelled'))
+        OR (OLD.status = 'scheduled' AND NEW.status IN ('dispatched','cancelled'))
+        OR (OLD.status = 'dispatched' AND NEW.status = 'delivered')) THEN
+        RAISE EXCEPTION 'Invalid order status transition: % -> %.', OLD.status, NEW.status USING ERRCODE = '23514';
+    END IF;
+    IF NEW.status = 'scheduled' THEN
+        IF NOT EXISTS (SELECT 1 FROM public.order_item WHERE order_id = NEW.order_id)
+           OR EXISTS (SELECT 1 FROM public.order_item oi WHERE oi.order_id = NEW.order_id AND oi.quantity <>
+             COALESCE((SELECT sum(a.quantity) FROM public.order_trip_item a
+                       WHERE a.order_id = oi.order_id AND a.product_id = oi.product_id AND a.reservation_active),0)) THEN
+            RAISE EXCEPTION 'An order must be fully allocated before it is scheduled.' USING ERRCODE = '23514';
+        END IF;
+    END IF;
+    IF NEW.status = 'cancelled' THEN
+        -- Same destination/trip lock order as the allocator, before checking departure times.
+        PERFORM s.store_id FROM public.store s
+        WHERE s.store_id IN (SELECT ts.store_id FROM public.order_trip_item a
+            JOIN public.train_schedule ts USING (trip_id) WHERE a.order_id = NEW.order_id AND a.reservation_active)
+        ORDER BY s.store_id FOR UPDATE;
+        PERFORM ts.trip_id FROM public.train_schedule ts
+        WHERE ts.trip_id IN (SELECT trip_id FROM public.order_trip_item WHERE order_id = NEW.order_id AND reservation_active)
+        ORDER BY ts.departure_datetime, ts.trip_id FOR UPDATE;
+        IF EXISTS (SELECT 1 FROM public.order_trip_item a JOIN public.train_schedule ts USING (trip_id)
+                   WHERE a.order_id = NEW.order_id AND a.reservation_active
+                   AND ts.departure_datetime <= (clock_timestamp() AT TIME ZONE 'Asia/Colombo')) THEN
+            RAISE EXCEPTION 'Cannot release an order after a reserved train has departed.' USING ERRCODE = '23514';
+        END IF;
+    END IF;
+    RETURN NEW;
+END $$;
