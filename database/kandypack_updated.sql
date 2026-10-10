@@ -745,4 +745,20 @@ BEGIN
     RETURN NEW;
 END $$;
 
+--
+-- Name: kp_booked_travel_guard(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.kp_booked_travel_guard() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM public.order_trip_item
+               WHERE order_id = OLD.order_id AND trip_id = OLD.trip_id) THEN
+        RAISE EXCEPTION 'Booked travel records cannot be edited; create a new order instead.' USING ERRCODE = '23514';
+    END IF;
+    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+    RETURN NEW;
+END $$;
+
 COMMIT;
