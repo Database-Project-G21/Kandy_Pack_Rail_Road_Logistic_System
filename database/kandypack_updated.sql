@@ -761,4 +761,19 @@ BEGIN
     RETURN NEW;
 END $$;
 
+--
+-- Name: kp_cancel_reservations(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.kp_cancel_reservations() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NEW.status = 'cancelled' AND OLD.status <> 'cancelled' THEN
+        UPDATE public.order_trip_item SET reservation_active = false
+        WHERE order_id = NEW.order_id AND reservation_active;
+    END IF;
+    RETURN NEW;
+END $$;
+
 COMMIT;
