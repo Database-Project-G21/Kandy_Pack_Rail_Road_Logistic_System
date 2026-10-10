@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface City {
   cityId: string;
@@ -16,6 +17,8 @@ export default function Signup() {
   const [cityId, setCityId] = useState("");
   const [cities, setCities] = useState<City[]>([]);
 
+  const router = useRouter();
+
   useEffect(() => {
     setCities([
       { cityId: "CMB", cityName: "Colombo" },
@@ -26,6 +29,42 @@ export default function Signup() {
       { cityId: "TRN", cityName: "Trincomalee" },
     ]);
   }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const response = await fetch(
+        "http://localhost:8081/api/auth/signup",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            customerName,
+            deliveryAddress,
+            phoneNumber,
+            email,
+            password,
+            cityId,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("customerId", data.customerId);
+        localStorage.setItem("role", data.role);
+
+        router.push("/");
+      }
+    } catch (err) {
+      console.error("Signup request failed:", err);
+    }
+  };
 
   return (
     <div className="auth-shell">
@@ -40,10 +79,7 @@ export default function Signup() {
           </p>
         </div>
 
-        <form
-          onSubmit={(e) => e.preventDefault()}
-          className="flex flex-col gap-4"
-        >
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
               Full Name
