@@ -1130,4 +1130,115 @@ BEGIN
     RETURN NEW;
 END;
 $$;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: COLUMN train_schedule.allocated_capacity; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.train_schedule.allocated_capacity IS 'Fixed capacity allocated to this trip. Migration baseline = uploaded remaining capacity plus known active allocations; historical deduction errors are not inferred or corrected.';
+
+
+--
+-- Name: order_item kp_booked_item_guard; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER kp_booked_item_guard BEFORE INSERT OR DELETE OR UPDATE ON public.order_item FOR EACH ROW EXECUTE FUNCTION public.kp_booked_item_guard();
+
+
+--
+-- Name: order_travel kp_booked_travel_guard; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER kp_booked_travel_guard BEFORE DELETE OR UPDATE ON public.order_travel FOR EACH ROW EXECUTE FUNCTION public.kp_booked_travel_guard();
+
+
+--
+-- Name: customer_order kp_cancel_reservations; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER kp_cancel_reservations AFTER UPDATE OF status ON public.customer_order FOR EACH ROW EXECUTE FUNCTION public.kp_cancel_reservations();
+
+
+--
+-- Name: train_schedule kp_new_trip_capacity; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER kp_new_trip_capacity BEFORE INSERT ON public.train_schedule FOR EACH ROW EXECUTE FUNCTION public.kp_new_trip_capacity();
+
+
+--
+-- Name: customer_order kp_order_status_guard; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER kp_order_status_guard BEFORE UPDATE OF status ON public.customer_order FOR EACH ROW EXECUTE FUNCTION public.kp_order_status_guard();
+
+
+--
+-- Name: order_trip_item kp_reserve_train_space; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER kp_reserve_train_space BEFORE INSERT OR DELETE OR UPDATE ON public.order_trip_item FOR EACH ROW EXECUTE FUNCTION public.kp_reserve_train_space();
+
+
+--
+-- Name: truck_dispatch trg_assistant_max_consecutive; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_assistant_max_consecutive BEFORE INSERT ON public.truck_dispatch FOR EACH ROW EXECUTE FUNCTION public.trg_fn_assistant_max_consecutive();
+
+
+--
+-- Name: truck_dispatch trg_assistant_no_overlap; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_assistant_no_overlap BEFORE INSERT ON public.truck_dispatch FOR EACH ROW EXECUTE FUNCTION public.trg_fn_assistant_no_overlap();
+
+
+--
+-- Name: truck_dispatch trg_assistant_weekly_hours; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_assistant_weekly_hours BEFORE INSERT ON public.truck_dispatch FOR EACH ROW EXECUTE FUNCTION public.trg_fn_assistant_weekly_hours();
+
+
+--
+-- Name: truck_dispatch trg_driver_no_consecutive; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_driver_no_consecutive BEFORE INSERT ON public.truck_dispatch FOR EACH ROW EXECUTE FUNCTION public.trg_fn_driver_no_consecutive();
+
+
+--
+-- Name: truck_dispatch trg_driver_no_overlap; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_driver_no_overlap BEFORE INSERT ON public.truck_dispatch FOR EACH ROW EXECUTE FUNCTION public.trg_fn_driver_no_overlap();
+
+
+--
+-- Name: truck_dispatch trg_driver_weekly_hours; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_driver_weekly_hours BEFORE INSERT ON public.truck_dispatch FOR EACH ROW EXECUTE FUNCTION public.trg_fn_driver_weekly_hours();
+
+
+--
+-- Name: truck_dispatch trg_truck_no_overlap; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_truck_no_overlap BEFORE INSERT ON public.truck_dispatch FOR EACH ROW EXECUTE FUNCTION public.trg_fn_truck_no_overlap();
+
+
+--
+-- Name: truck_dispatch trg_update_driver_hours; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_update_driver_hours AFTER INSERT ON public.truck_dispatch FOR EACH ROW EXECUTE FUNCTION public.trg_fn_update_hours();
+
+
+
 COMMIT;
