@@ -75,7 +75,37 @@ public class AuthController {
 
         return ResponseEntity.ok(response);
     }
-}
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+
+        Customer customer =
+                customerRepo.findByEmail(request.getEmail()).orElse(null);
+
+        if (customer != null &&
+                encoder.matches(
+                        request.getPassword(),
+                        customer.getPassword()
+                )) {
+
+            String token =
+                    jwtUtil.generateToken(
+                            customer.getCustomerId(),
+                            "CUSTOMER"
+                    );
+
+            Map<String, String> response = new HashMap<>();
+            response.put("token", token);
+            response.put("customerId", customer.getCustomerId());
+            response.put("role", "CUSTOMER");
+
+            return ResponseEntity.ok(response);
+        }
+
+        return ResponseEntity
+                .status(401)
+                .body("Invalid email or password");
+    }
 
     public static class SignupRequest {
         private String customerName;
@@ -133,6 +163,28 @@ public class AuthController {
             this.password = password;
         }
     }
+
+    public static class LoginRequest {
+        private String email;
+        private String password;
+
+        public String getEmail() {
+            return email;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+    }
+}
 
 interface CityRepo extends JpaRepository<City, String> {
 }
