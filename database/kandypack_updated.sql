@@ -724,4 +724,25 @@ BEGIN
     RETURN v_total_hours;
 END;
 $$;
+--
+-- Name: kp_booked_item_guard(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.kp_booked_item_guard() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE v_order_id varchar(10);
+BEGIN
+    IF TG_OP = 'INSERT' THEN v_order_id := NEW.order_id; ELSE v_order_id := OLD.order_id; END IF;
+    PERFORM 1 FROM public.customer_order WHERE order_id = v_order_id FOR UPDATE;
+    IF EXISTS (SELECT 1 FROM public.order_trip_item WHERE order_id = v_order_id) THEN
+        RAISE EXCEPTION 'Booked order items cannot be edited; create a new order instead.' USING ERRCODE = '23514';
+    END IF;
+    IF TG_OP = 'UPDATE' AND NEW.order_id <> OLD.order_id THEN
+        RAISE EXCEPTION 'Moving items between orders is not supported.' USING ERRCODE = '23514';
+    END IF;
+    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+    RETURN NEW;
+END $$;
+
 COMMIT;
