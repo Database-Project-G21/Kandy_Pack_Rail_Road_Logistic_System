@@ -1,4 +1,4 @@
--- Kandypack cumulative snapshot: Person 3 (Persons 1 through 3).
+-- Kandypack cumulative snapshot: Person 4 (Persons 1 through 4).
 -- Restore ONLY into a NEW EMPTY database with psql -v ON_ERROR_STOP=1 -f this_file.sql
 -- These are alternative full snapshots, NOT sequential migrations.
 -- Persons 1-4 contain schema only; Person 5 includes the original demo data.
@@ -562,7 +562,11 @@ ALTER TABLE ONLY public.truck
     ADD CONSTRAINT truck_store_id_fkey FOREIGN KEY (store_id) REFERENCES public.store(store_id);
 
 
--- Assigning orders to trips
+
+-- ===== Person 4 additions =====
+--
+-- Name: assign_order_to_trips(character varying, character varying, character varying); Type: PROCEDURE; Schema: public; Owner: -
+--
 
 CREATE PROCEDURE public.assign_order_to_trips(IN p_order_id character varying, IN p_route_id character varying, IN p_preferred_trip_id character varying DEFAULT NULL::character varying)
     LANGUAGE plpgsql
@@ -652,6 +656,7 @@ BEGIN
     UPDATE public.customer_order SET status = 'scheduled' WHERE order_id = p_order_id;
 END $$;
 
+
 --
 -- Name: assignordertotrip(character varying, character varying); Type: PROCEDURE; Schema: public; Owner: -
 --
@@ -724,6 +729,8 @@ BEGIN
     RETURN v_total_hours;
 END;
 $$;
+
+
 --
 -- Name: kp_booked_item_guard(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -745,6 +752,7 @@ BEGIN
     RETURN NEW;
 END $$;
 
+
 --
 -- Name: kp_booked_travel_guard(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -761,6 +769,7 @@ BEGIN
     RETURN NEW;
 END $$;
 
+
 --
 -- Name: kp_cancel_reservations(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -776,6 +785,7 @@ BEGIN
     RETURN NEW;
 END $$;
 
+
 --
 -- Name: kp_new_trip_capacity(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -789,6 +799,7 @@ BEGIN
     END IF;
     RETURN NEW;
 END $$;
+
 
 --
 -- Name: kp_order_status_guard(); Type: FUNCTION; Schema: public; Owner: -
@@ -829,6 +840,7 @@ BEGIN
     END IF;
     RETURN NEW;
 END $$;
+
 
 --
 -- Name: kp_reserve_train_space(); Type: FUNCTION; Schema: public; Owner: -
@@ -911,6 +923,7 @@ BEGIN
     RETURN NEW;
 END $$;
 
+
 --
 -- Name: trg_fn_assistant_max_consecutive(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -933,6 +946,7 @@ BEGIN
     RETURN NEW;
 END;
 $$;
+
 
 --
 -- Name: trg_fn_assistant_no_overlap(); Type: FUNCTION; Schema: public; Owner: -
@@ -958,6 +972,7 @@ BEGIN
 END;
 $$;
 
+
 --
 -- Name: trg_fn_assistant_weekly_hours(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -981,6 +996,8 @@ BEGIN
     RETURN NEW;
 END;
 $$;
+
+
 --
 -- Name: trg_fn_deduct_capacity(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -1036,6 +1053,7 @@ BEGIN
     RETURN NEW;
 END;
 $$;
+
 
 --
 -- Name: trg_fn_driver_no_overlap(); Type: FUNCTION; Schema: public; Owner: -
@@ -1111,6 +1129,7 @@ BEGIN
 END;
 $$;
 
+
 --
 -- Name: trg_fn_update_hours(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -1130,6 +1149,7 @@ BEGIN
     RETURN NEW;
 END;
 $$;
+
 
 SET default_tablespace = '';
 
