@@ -18,6 +18,46 @@ export default function Login() {
             Sign in to your account
           </p>
         </div>
+
+        <form
+          onSubmit={(e) => e.preventDefault()}
+          className="flex flex-col gap-5"
+        >
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              Email
+            </label>
+
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent transition"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              Password
+            </label>
+
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent transition"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="bg-[#1e3a5f] text-white font-medium rounded-lg px-4 py-2.5 mt-2 hover:bg-[#2c5282] transition"
+          >
+            Log In
+          </button>
+        </form>
       </div>
     </div>
   );
