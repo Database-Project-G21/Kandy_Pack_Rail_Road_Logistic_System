@@ -1111,4 +1111,23 @@ BEGIN
 END;
 $$;
 
+--
+-- Name: trg_fn_update_hours(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.trg_fn_update_hours() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    UPDATE DRIVER
+    SET weekly_hours_logged = weekly_hours_logged + (EXTRACT(EPOCH FROM (NEW.end_time - NEW.start_time)) / 3600)
+    WHERE driver_id = NEW.driver_id;
+
+    UPDATE ASSISTANT
+    SET weekly_hours_logged = weekly_hours_logged + (EXTRACT(EPOCH FROM (NEW.end_time - NEW.start_time)) / 3600)
+    WHERE assistant_id = NEW.assistant_id;
+
+    RETURN NEW;
+END;
+$$;
 COMMIT;
