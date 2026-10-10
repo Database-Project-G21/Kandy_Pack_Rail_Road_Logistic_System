@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import com.kandypack.kandypackbackend.entity.StaffUser;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -131,6 +132,47 @@ public class AuthController {
                 .body("Invalid email or password");
     }
 
+    @PostMapping("/staff-signup")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> staffSignup(
+            @RequestBody StaffSignupRequest request) {
+
+        if (!request.getRole().equals("ADMIN") &&
+                !request.getRole().equals("DISPATCHER") &&
+                !request.getRole().equals("STORE_MANAGER") &&
+                !request.getRole().equals("DRIVER")) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            "Invalid role. Must be ADMIN, DISPATCHER, STORE_MANAGER, or DRIVER"
+                    );
+        }
+
+        StaffUser staff = new StaffUser();
+
+        staff.setStaffId(
+                "STF" + UUID.randomUUID()
+                        .toString()
+                        .substring(0, 7)
+                        .toUpperCase()
+        );
+
+        staff.setStaffName(request.getStaffName());
+        staff.setEmail(request.getEmail());
+        staff.setPassword(encoder.encode(request.getPassword()));
+        staff.setRole(request.getRole());
+
+        staffUserRepo.save(staff);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("staffId", staff.getStaffId());
+        response.put("email", staff.getEmail());
+        response.put("role", staff.getRole());
+
+        return ResponseEntity.ok(response);
+    }
+
     public static class SignupRequest {
         private String customerName;
         private String deliveryAddress;
@@ -208,6 +250,46 @@ public class AuthController {
             this.password = password;
         }
     }
+
+    public static class StaffSignupRequest {
+        private String staffName;
+        private String email;
+        private String password;
+        private String role;
+
+        public String getStaffName() {
+            return staffName;
+        }
+
+        public void setStaffName(String staffName) {
+            this.staffName = staffName;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+
+        public String getRole() {
+            return role;
+        }
+
+        public void setRole(String role) {
+            this.role = role;
+        }
+    }
+    
 }
 
 interface CityRepo extends JpaRepository<City, String> {
