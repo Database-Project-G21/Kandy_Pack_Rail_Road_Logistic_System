@@ -981,4 +981,60 @@ BEGIN
     RETURN NEW;
 END;
 $$;
+--
+-- Name: trg_fn_deduct_capacity(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.trg_fn_deduct_capacity() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    needed_space DECIMAL(10,2);
+    remaining_space DECIMAL(10,2);
+BEGIN
+    SELECT SUM(oi.quantity * p.space_consumption)
+    INTO needed_space
+    FROM ORDER_ITEM oi
+    JOIN PRODUCT p ON oi.product_id = p.product_id
+    WHERE oi.order_id = NEW.order_id;
+
+    SELECT available_capacity INTO remaining_space
+    FROM TRAIN_SCHEDULE
+    WHERE trip_id = NEW.trip_id;
+
+    IF needed_space > remaining_space THEN
+        RAISE EXCEPTION 'Order exceeds available train capacity for this trip';
+    ELSE
+        UPDATE TRAIN_SCHEDULE
+        SET available_capacity = available_capacity - needed_space
+        WHERE trip_id = NEW.trip_id;
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: trg_fn_driver_no_consecutive(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.trg_fn_driver_no_consecutive() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    last_end TIMESTAMP;
+BEGIN
+    SELECT MAX(end_time) INTO last_end
+    FROM TRUCK_DISPATCH
+    WHERE driver_id = NEW.driver_id;
+
+    IF last_end IS NOT NULL AND NEW.start_time <= last_end + INTERVAL '1 hour' THEN
+        RAISE EXCEPTION 'Driver cannot be assigned two consecutive deliveries without a break';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
 COMMIT;
