@@ -957,4 +957,28 @@ BEGIN
     RETURN NEW;
 END;
 $$;
+
+--
+-- Name: trg_fn_assistant_weekly_hours(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.trg_fn_assistant_weekly_hours() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    total_hours DECIMAL(6,2);
+BEGIN
+    SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time)) / 3600), 0)
+    INTO total_hours
+    FROM TRUCK_DISPATCH
+    WHERE assistant_id = NEW.assistant_id
+    AND date_trunc('week', start_time) = date_trunc('week', NEW.start_time);
+
+    IF total_hours + (EXTRACT(EPOCH FROM (NEW.end_time - NEW.start_time)) / 3600) > 60 THEN
+        RAISE EXCEPTION 'Assistant weekly hour limit (60 hrs) exceeded';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
 COMMIT;
