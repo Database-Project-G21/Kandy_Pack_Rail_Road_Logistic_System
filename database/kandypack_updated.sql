@@ -776,4 +776,17 @@ BEGIN
     RETURN NEW;
 END $$;
 
+--
+-- Name: kp_new_trip_capacity(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.kp_new_trip_capacity() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NEW.allocated_capacity IS NULL THEN
+        NEW.allocated_capacity := NEW.available_capacity;
+    END IF;
+    RETURN NEW;
+END $$;
 COMMIT;
