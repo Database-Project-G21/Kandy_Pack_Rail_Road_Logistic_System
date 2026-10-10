@@ -6,6 +6,34 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const response = await fetch(
+        "http://localhost:8081/api/auth/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("Login successful", data);
+      }
+    } catch (err) {
+      console.error("Login request failed:", err);
+    }
+  };
+
   return (
     <div className="auth-shell">
       <div className="auth-panel">
@@ -19,10 +47,7 @@ export default function Login() {
           </p>
         </div>
 
-        <form
-          onSubmit={(e) => e.preventDefault()}
-          className="flex flex-col gap-5"
-        >
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
               Email
