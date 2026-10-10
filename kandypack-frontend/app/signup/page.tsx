@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 interface City {
@@ -16,6 +16,7 @@ export default function Signup() {
   const [password, setPassword] = useState("");
   const [cityId, setCityId] = useState("");
   const [cities, setCities] = useState<City[]>([]);
+  const [message, setMessage] = useState("");
 
   const router = useRouter();
 
@@ -32,6 +33,7 @@ export default function Signup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage("Creating account...");
 
     try {
       const response = await fetch(
@@ -59,10 +61,21 @@ export default function Signup() {
         localStorage.setItem("customerId", data.customerId);
         localStorage.setItem("role", data.role);
 
+        setMessage("Account created! Redirecting...");
         router.push("/");
+      } else {
+        setMessage(
+          "Signup failed: " +
+            (data.message || JSON.stringify(data))
+        );
       }
-    } catch (err) {
-      console.error("Signup request failed:", err);
+    } catch (err: unknown) {
+      setMessage(
+        "Request failed: " +
+          (err instanceof Error
+            ? err.message
+            : "Please try again.")
+      );
     }
   };
 
@@ -121,9 +134,9 @@ export default function Signup() {
             >
               <option value="">Select a city</option>
 
-              {cities.map((city) => (
-                <option key={city.cityId} value={city.cityId}>
-                  {city.cityName}
+              {cities.map((c) => (
+                <option key={c.cityId} value={c.cityId}>
+                  {c.cityName}
                 </option>
               ))}
             </select>
@@ -178,6 +191,21 @@ export default function Signup() {
             Sign Up
           </button>
         </form>
+
+        {message && (
+          <div
+            className={`mt-5 text-sm text-center px-4 py-2.5 rounded-lg ${
+              message.toLowerCase().includes("failed") ||
+              message.toLowerCase().includes("error")
+                ? "bg-red-50 text-red-700"
+                : message.toLowerCase().includes("created")
+                ? "bg-green-50 text-green-700"
+                : "bg-slate-50 text-slate-600"
+            }`}
+          >
+            {message}
+          </div>
+        )}
       </div>
     </div>
   );
