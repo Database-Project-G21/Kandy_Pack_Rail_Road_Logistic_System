@@ -1,5 +1,5 @@
-
 "use client";
+
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -104,8 +104,8 @@ export default function Login() {
     <div className="auth-shell">
       <div className="auth-panel">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-slate-800">Kandypack</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="auth-title">Welcome back</h1>
+          <p className="text-sm text-slate-500 mt-1">
             Sign in to your account
           </p>
         </div>
@@ -118,6 +118,7 @@ export default function Login() {
             >
               Email
             </label>
+
             <input
               id="email"
               type="email"
@@ -126,7 +127,7 @@ export default function Login() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isLoading}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] disabled:opacity-60"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#a91d40] focus:border-transparent transition disabled:opacity-60"
             />
           </div>
 
@@ -137,6 +138,7 @@ export default function Login() {
             >
               Password
             </label>
+
             <input
               id="password"
               type="password"
@@ -145,14 +147,14 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] disabled:opacity-60"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#a91d40] focus:border-transparent transition disabled:opacity-60"
             />
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="mt-2 rounded-lg bg-[#1e3a5f] px-4 py-2.5 font-medium text-white transition hover:bg-[#2c5282] disabled:cursor-not-allowed disabled:opacity-60"
+            className="bg-[#a91d40] text-white font-medium rounded-lg px-4 py-2.5 mt-2 hover:bg-[#891735] transition disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isLoading ? "Logging in..." : "Log In"}
           </button>
@@ -178,7 +180,7 @@ export default function Login() {
           Don&apos;t have an account?{" "}
           <a
             href="/signup"
-            className="font-medium text-[#1e3a5f] hover:underline"
+            className="font-medium text-[#a91d40] hover:underline"
           >
             Sign up
           </a>
