@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -60,7 +60,10 @@ export default function Signup() {
         setMessage("Signup failed: " + (data.message || JSON.stringify(data)));
       }
     } catch (err: unknown) {
-      setMessage("Request failed: " + (err instanceof Error ? err.message : "Please try again."));
+      setMessage(
+        "Request failed: " +
+          (err instanceof Error ? err.message : "Please try again.")
+      );
     }
   };
 
@@ -68,7 +71,9 @@ export default function Signup() {
     <div className="auth-shell">
       <div className="auth-panel">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-slate-800">Create Account</h1>
+          <h1 className="text-2xl font-bold text-slate-800">
+            Create Account
+          </h1>
           <p className="text-sm text-slate-500 mt-1">
             Sign up to start placing orders
           </p>
@@ -174,8 +179,8 @@ export default function Signup() {
               message.toLowerCase().includes("error")
                 ? "bg-red-50 text-red-700"
                 : message.toLowerCase().includes("created")
-                ? "bg-green-50 text-green-700"
-                : "bg-slate-50 text-slate-600"
+                  ? "bg-green-50 text-green-700"
+                  : "bg-slate-50 text-slate-600"
             }`}
           >
             {message}
