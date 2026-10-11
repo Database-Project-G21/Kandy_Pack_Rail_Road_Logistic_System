@@ -14,3 +14,10 @@ build/
 
 # Local logs
 *.log
+
+# Local helper files and downloaded JARs
+/GenerateHash.java
+/GenerateHash.class
+/backend-app-copy.jar
+/commons-logging.jar
+/spring-security-crypto.jar
