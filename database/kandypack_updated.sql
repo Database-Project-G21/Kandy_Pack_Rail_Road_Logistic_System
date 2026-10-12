@@ -48,6 +48,14 @@ CREATE TABLE public.city (
     has_rail_station boolean DEFAULT false NOT NULL
 );
 
+INSERT INTO public.city (city_id, city_name, has_rail_station)
+VALUES
+    ('CMB', 'Colombo', TRUE),
+    ('NEG', 'Negombo', TRUE),
+    ('GAL', 'Galle', TRUE),
+    ('MAT', 'Matara', TRUE),
+    ('JAF', 'Jaffna', TRUE),
+    ('TRN', 'Trincomalee', TRUE);
 
 --
 -- Name: customer; Type: TABLE; Schema: public; Owner: -
