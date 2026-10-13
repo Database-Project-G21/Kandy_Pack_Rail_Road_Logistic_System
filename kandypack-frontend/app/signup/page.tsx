@@ -1,5 +1,5 @@
 "use client";
-
+import Brand from "../components/Brand";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -69,7 +69,7 @@ export default function Signup() {
     <div className="auth-shell">
       <div className="auth-panel">
         <div className="mb-6 text-center">
-          <h1 className="auth-title">Create your account</h1>
+          <div className="auth-brand"><Brand /></div><h1 className="auth-title">Create your account</h1>
           <p className="text-sm text-slate-500 mt-1">
             Sign up to start placing orders
           </p>

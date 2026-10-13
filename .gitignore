@@ -14,15 +14,3 @@ build/
 
 # Local logs
 *.log
-
-# Local helper files and downloaded JARs
-/GenerateHash.java
-/GenerateHash.class
-/backend-app-copy.jar
-/commons-logging.jar
-/spring-security-crypto.jar
-
-# Local database setup and recovery scripts
-/database/install_assign_order_to_trips.sql
-/database/seed_dropdowns_reference.sql
-/seed_dropdowns.sql
