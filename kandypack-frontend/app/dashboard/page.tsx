@@ -154,7 +154,7 @@ export default function Dashboard() {
           </button>}
         </div>
 
-        <div className="stats-grid">{cards.map(([label, value, status]) => <button type="button" style={{textAlign:"left", borderColor: filter === status ? "#c64d1e" : undefined}} className="stat-card" key={label} aria-pressed={filter === status} onClick={() => setFilter(status)}><span>{label}</span><strong>{value}</strong></button>)}</div>
+        <div className="stats-grid">{cards.map(([label, value, status]) => <button type="button" style={{textAlign:"left", borderColor: filter === status ? "#b51f46" : undefined}} className="stat-card" key={label} aria-pressed={filter === status} onClick={() => setFilter(status)}><span>{label}</span><strong>{value}</strong></button>)}</div>
         {!isDispatcher && role === "ADMIN" && <p className="mb-5 text-sm text-slate-600">Delivered order value: <strong>Rs. {orders.filter(o => o.status === "delivered").reduce((sum, o) => sum + Number(o.amount), 0).toLocaleString("en-LK", {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong> · CSV includes all orders, regardless of the current filter.</p>}
         <div className="table-tools"><input aria-label="Search orders" type="search" placeholder="Search order ID or customer" value={search} onChange={e => setSearch(e.target.value)} /><select aria-label="Filter order status" value={filter} onChange={e => setFilter(e.target.value)}>{["all", "active", "placed", "scheduled", "dispatched", "delivered", "cancelled"].map(s => <option value={s} key={s}>{s === "all" ? "All statuses" : s === "active" ? "Active orders" : s}</option>)}</select></div>
         {message && (
@@ -208,7 +208,7 @@ export default function Dashboard() {
                             e.target.value = "";
                           }
                         }}
-                        className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
+                        className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#a91d40]"
                       >
                         <option value="">Change status...</option>
                         {(o.status === "placed" ? ["scheduled", "cancelled"] :

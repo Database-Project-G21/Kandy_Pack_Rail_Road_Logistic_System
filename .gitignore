@@ -1,0 +1,16 @@
+# Local environment secrets
+.env
+.env.*
+!.env.example
+
+# Java / Maven build output
+**/target/
+
+# Frontend dependencies and build output
+node_modules/
+.next/
+out/
+build/
+
+# Local logs
+*.log

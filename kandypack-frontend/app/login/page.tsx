@@ -1,5 +1,6 @@
 "use client";
 
+import Brand from "../components/Brand";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -45,7 +46,7 @@ export default function Login() {
     <div className="auth-shell">
       <div className="auth-panel">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-slate-800">Kandypack</h1>
+          <div className="auth-brand"><Brand /></div><h1 className="auth-title">Welcome back</h1>
           <p className="text-sm text-slate-500 mt-1">
             Sign in to your account
           </p>
@@ -61,7 +62,7 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent transition"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#a91d40] focus:border-transparent transition"
             />
           </div>
 
@@ -74,13 +75,13 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent transition"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#a91d40] focus:border-transparent transition"
             />
           </div>
 
           <button
             type="submit"
-            className="bg-[#1e3a5f] text-white font-medium rounded-lg px-4 py-2.5 mt-2 hover:bg-[#2c5282] transition"
+            className="bg-[#a91d40] text-white font-medium rounded-lg px-4 py-2.5 mt-2 hover:bg-[#891735] transition"
           >
             Log In
           </button>
@@ -103,7 +104,7 @@ export default function Login() {
 
         <p className="mt-5 text-sm text-center text-slate-500">
           Don&apos;t have an account?{" "}
-          <a href="/signup" className="font-medium text-[#1e3a5f] hover:underline">
+          <a href="/signup" className="font-medium text-[#a91d40] hover:underline">
             Sign up
           </a>
         </p>

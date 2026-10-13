@@ -1,4 +1,5 @@
 "use client";
+import Brand from "../components/Brand";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -68,7 +69,7 @@ export default function Signup() {
     <div className="auth-shell">
       <div className="auth-panel">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-slate-800">Create Account</h1>
+          <div className="auth-brand"><Brand /></div><h1 className="auth-title">Create your account</h1>
           <p className="text-sm text-slate-500 mt-1">
             Sign up to start placing orders
           </p>
@@ -84,7 +85,7 @@ export default function Signup() {
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
               required
-              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent transition"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#a91d40] focus:border-transparent transition"
             />
           </div>
 
@@ -97,7 +98,7 @@ export default function Signup() {
               value={deliveryAddress}
               onChange={(e) => setDeliveryAddress(e.target.value)}
               required
-              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent transition"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#a91d40] focus:border-transparent transition"
             />
           </div>
 
@@ -109,7 +110,7 @@ export default function Signup() {
               value={cityId}
               onChange={(e) => setCityId(e.target.value)}
               required
-              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent transition"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#a91d40] focus:border-transparent transition"
             >
               <option value="">Select a city</option>
               {cities.map((c) => (
@@ -129,7 +130,7 @@ export default function Signup() {
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               required
-              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent transition"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#a91d40] focus:border-transparent transition"
             />
           </div>
 
@@ -142,7 +143,7 @@ export default function Signup() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent transition"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#a91d40] focus:border-transparent transition"
             />
           </div>
 
@@ -155,13 +156,13 @@ export default function Signup() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent transition"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#a91d40] focus:border-transparent transition"
             />
           </div>
 
           <button
             type="submit"
-            className="bg-[#1e3a5f] text-white font-medium rounded-lg px-4 py-2.5 mt-2 hover:bg-[#2c5282] transition"
+            className="bg-[#a91d40] text-white font-medium rounded-lg px-4 py-2.5 mt-2 hover:bg-[#891735] transition"
           >
             Sign Up
           </button>
