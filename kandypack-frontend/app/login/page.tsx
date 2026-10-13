@@ -1,44 +1,42 @@
 "use client";
 
 import Brand from "../components/Brand";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { BusyLabel, Notice, type NoticeMessage } from "../components/Feedback";
+import { readJson, errorText } from "../lib/api-response";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [notice, setNotice] = useState<NoticeMessage | null>(null);
+  const [busy, setBusy] = useState(false);
+  const submitting = useRef(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage("Logging in...");
-
+    if (submitting.current) return;
+    submitting.current = true;
+    setBusy(true);
+    setNotice({ kind: "info", text: "Signing in. Please wait..." });
     try {
       const response = await fetch("http://localhost:8081/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("customerId", data.customerId || data.staffId);
-        localStorage.setItem("role", data.role);
-        setMessage("Login successful! Redirecting...");
-
-        if (data.role === "CUSTOMER") {
-          router.push("/");
-        } else {
-          router.push("/dashboard");
-        }
-      } else {
-        setMessage("Login failed: " + (data.message || data));
-      }
+      const data = await readJson<{ token: string; customerId: string; staffId: string; role: string }>(response);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("customerId", data.customerId || data.staffId);
+      localStorage.setItem("role", data.role);
+      setNotice({ kind: "success", text: "Login successful. Opening your account..." });
+      router.push(data.role === "CUSTOMER" ? "/" : "/dashboard");
+      // Keep the form locked until navigation completes.
     } catch (err: unknown) {
-      setMessage("Request failed: " + (err instanceof Error ? err.message : "Please try again."));
+      setNotice({ kind: "error", text: "Could not sign in: " + errorText(err) });
+      submitting.current = false;
+      setBusy(false);
     }
   };
 
@@ -52,55 +50,47 @@ export default function Login() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <form aria-busy={busy} onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+            <label htmlFor="login-email" className="block text-sm font-medium text-slate-700 mb-1.5">
               Email
             </label>
             <input
               type="email"
+              id="login-email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={busy}
               className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#a91d40] focus:border-transparent transition"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+            <label htmlFor="login-password" className="block text-sm font-medium text-slate-700 mb-1.5">
               Password
             </label>
             <input
               type="password"
+              id="login-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={busy}
               className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#a91d40] focus:border-transparent transition"
             />
           </div>
 
           <button
             type="submit"
+            disabled={busy}
             className="bg-[#a91d40] text-white font-medium rounded-lg px-4 py-2.5 mt-2 hover:bg-[#891735] transition"
           >
-            Log In
+            {busy ? <BusyLabel>Signing in...</BusyLabel> : "Log In"}
           </button>
         </form>
 
-        {message && (
-          <div
-            className={`mt-5 text-sm text-center px-4 py-2.5 rounded-lg ${
-              message.toLowerCase().includes("failed") ||
-              message.toLowerCase().includes("error")
-                ? "bg-red-50 text-red-700"
-                : message.toLowerCase().includes("success")
-                ? "bg-green-50 text-green-700"
-                : "bg-slate-50 text-slate-600"
-            }`}
-          >
-            {message}
-          </div>
-        )}
+        {notice && <Notice kind={notice.kind}>{notice.text}</Notice>}
 
         <p className="mt-5 text-sm text-center text-slate-500">
           Don&apos;t have an account?{" "}

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { LoadingState, Notice } from "../components/Feedback";
+import { readJson, errorText } from "../lib/api-response";
 
 interface Order {
   orderId: string;
@@ -22,7 +24,9 @@ const statusColors: Record<string, string> = {
 
 export default function OrderHistory() {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [message, setMessage] = useState("Loading orders...");
+  const [loadError, setLoadError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -33,22 +37,21 @@ export default function OrderHistory() {
       return;
     }
 
+    let live = true;
+    const controller = new AbortController();
     fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081"}/api/orders/my`, {
       headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal,
     })
-      .then(async (res) => {
-        const text = await res.text();
-        let data;
-        try { data = JSON.parse(text); } catch { throw new Error(text || "Invalid response"); }
-        if (!res.ok) throw new Error(data.message || "Could not load orders");
-        return data;
+      .then(readJson<Order[]>)
+      .then(data => {
+        if (!Array.isArray(data)) throw new Error("Unexpected order response.");
+        if (live) setOrders([...data].sort((a, b) => b.placementDate.localeCompare(a.placementDate) || a.orderId.localeCompare(b.orderId)));
       })
-      .then((data: Order[]) => {
-        setOrders([...data].sort((a, b) => b.placementDate.localeCompare(a.placementDate) || a.orderId.localeCompare(b.orderId)));
-        setMessage(data.length === 0 ? "No orders found." : "");
-      })
-      .catch((err) => setMessage("Failed to load orders: " + (err instanceof Error ? err.message : "Please try again.")));
-  }, [router]);
+      .catch(err => { if (live) setLoadError("Could not load your orders: " + errorText(err)); })
+      .finally(() => { if (live) setLoading(false); });
+    return () => { live = false; controller.abort(); };
+  }, [router, loadAttempt]);
 
   return (
     <div className="workspace-shell">
@@ -60,9 +63,10 @@ export default function OrderHistory() {
           </p>
         </div>
 
-        {message && (
-          <p className="text-sm text-slate-500 py-8 text-center">{message}</p>
-        )}
+        {loading && <LoadingState>Loading your order history...</LoadingState>}
+        {loadError && <Notice kind="error">{loadError}<br /><button type="button" className="secondary-button" onClick={() => { setLoadError(""); setLoading(true); setLoadAttempt(value => value + 1); }}>Try again</button></Notice>}
+        {!loading && !loadError && orders.length === 0 && <p className="empty-state">You have no orders yet. Your placed orders will appear here.</p>}
+
 
         {orders.length > 0 && (
           <div className="overflow-x-auto">
