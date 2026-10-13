@@ -91,3 +91,32 @@ th { background:#fff1f5; }.notice { background:#fff1f5; border-color:#b51f46; co
 .site-footer { border-color:#efd8e0; background:#fff; }.footer-brand { display:flex; justify-content:center; }.footer-brand .brand-logo { width:180px; }.site-footer p { color:#71535f; }
 @media(max-width:900px) { .hero-copy { padding:32px 26px; }.brand-logo { width:185px; }.product-art { height:175px; } }
 @media(max-width:640px) { .nav-inner { padding:14px 18px; }.brand-logo { width:180px; }.nav-links { gap:14px; }.shop-hero { padding:0; grid-template-columns:1fr; border-radius:18px; }.hero-copy { padding:28px 24px; }.hero-art { min-height:225px; display:block; }.shop-hero h1 { font-size:35px; }.product-art { height:145px; }.product-info { padding:12px; }.product-info h3 { font-size:13px; }.product-bottom { flex-direction:row; flex-wrap:wrap; align-items:center; }.product-bottom strong { font-size:13px; }.product-bottom button { padding:8px 13px; }.nav-top { font-size:9px; }.art-tag { bottom:12px; } }
+
+/* Frontend usability: keep the existing KandyPack design and colours. */
+html { scroll-padding-top:calc(var(--site-nav-height, 0px) + 16px); }
+.site-nav { position:sticky; top:0; z-index:40; flex-shrink:0; box-shadow:0 3px 16px #85223d08; }
+.catalog,.checkout-panel { scroll-margin-top:0; }
+.busy-label { display:inline-flex; align-items:center; justify-content:center; gap:9px; }
+.busy-spinner { display:inline-block; width:16px; height:16px; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; flex-shrink:0; animation:kp-spin .8s linear infinite; }
+@keyframes kp-spin { to { transform:rotate(360deg); } }
+.loading-state { padding:30px 16px; color:#795463; font-size:14px; text-align:center; }
+.feedback { display:flex; align-items:flex-start; gap:12px; padding:15px 18px; border:1px solid; border-radius:10px; font-size:13px; line-height:1.65; overflow-wrap:anywhere; margin:18px 0; text-align:left; }
+.feedback-label { display:block; font-size:12px; margin-bottom:2px; }
+.feedback-icon { flex-shrink:0; display:grid; place-items:center; border:1px solid currentColor; border-radius:50%; width:20px; height:20px; font-weight:700; margin-top:2px; }
+.feedback-info { background:#fff4f8; border-color:#ebcbd7; color:#792440; }
+.feedback-success { background:#f0faf4; border-color:#bce2cd; color:#165d37; }
+.feedback-error { background:#fff2f2; border-color:#f0bbbb; color:#912c34; }
+.secondary-button,.danger-button { min-height:42px; padding:10px 16px; border-radius:8px; font-size:13px; font-weight:600; }
+.secondary-button { background:#fff; color:#71334a; border:1px solid #dfbfcc; }
+.secondary-button:hover:not(:disabled) { background:#fff4f8; }
+.danger-button { background:#a91d40; color:white; border:1px solid #a91d40; }
+.danger-button:hover:not(:disabled) { background:#851732; }
+.feedback .secondary-button { margin-top:10px; }
+.cancel-dialog { position:fixed; inset:0; margin:auto; width:min(460px,calc(100% - 32px)); max-height:calc(100dvh - 32px); overflow:auto; padding:28px; border:1px solid #efd4df; border-radius:18px; background:white; color:#382b30; box-shadow:0 24px 80px #3b142640; }
+.cancel-dialog::backdrop { background:#27172080; }
+.cancel-dialog h2 { font-size:23px; font-weight:700; letter-spacing:-.5px; margin:9px 0 14px; }
+.cancel-dialog p { font-size:14px; line-height:1.65; }
+.dialog-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:10px; margin-top:25px; }
+.dialog-progress { margin-top:16px; color:#795463; }
+@media(max-width:640px) { .cancel-dialog { padding:24px; }.dialog-actions button { flex:1; }.feedback { padding:13px; } }
+@media(prefers-reduced-motion:reduce) { .busy-spinner { animation:none; } }

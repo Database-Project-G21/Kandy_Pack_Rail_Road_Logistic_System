@@ -1,7 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
+import { BusyLabel, LoadingState, Notice, type NoticeMessage } from "../components/Feedback";
+import CancelOrderDialog from "../components/CancelOrderDialog";
+import { readJson, errorText } from "../lib/api-response";
 
 interface Order {
   orderId: string;
@@ -23,13 +26,25 @@ const statusColors: Record<string, string> = {
   cancelled: "bg-red-50 text-red-700",
 };
 
+function subscribeToRole(onChange: () => void) {
+  window.addEventListener("storage", onChange);
+  return () => window.removeEventListener("storage", onChange);
+}
+
 export default function Dashboard() {
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [statusFilter, setFilter] = useState("");
   const [pending, setPending] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [role, setRole] = useState("");
-  const [message, setMessage] = useState("Loading orders...");
+  const role = useSyncExternalStore(subscribeToRole, () => localStorage.getItem("role") || "", () => "");
+  const [notice, setNotice] = useState<NoticeMessage | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const [cancelOrderId, setCancelOrderId] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const statusInFlight = useRef(false);
+  const exportInFlight = useRef(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -46,41 +61,32 @@ export default function Dashboard() {
       return;
     }
 
-    setRole(storedRole || "");
-    setFilter(storedRole === "DISPATCHER" ? "active" : "all");
-    loadOrders(token);
-  }, [router]);
-
-  const loadOrders = (token: string) => {
+    let live = true;
+    const controller = new AbortController();
     fetch(`${API}/api/orders`, {
       headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal,
     })
-      .then(async (res) => { const data = await res.json(); if (!res.ok) throw new Error(data.message || "Could not load orders"); if (!Array.isArray(data)) throw new Error("Unexpected order response"); return data; })
-      .then((data: Order[]) => {
-        setOrders([...data].sort((a, b) => b.placementDate.localeCompare(a.placementDate) || a.orderId.localeCompare(b.orderId)));
-        setMessage(data.length === 0 ? "No orders found." : "");
+      .then(readJson<Order[]>)
+      .then(data => {
+        if (!Array.isArray(data)) throw new Error("Unexpected order response.");
+        if (live) setOrders([...data].sort((a, b) => b.placementDate.localeCompare(a.placementDate) || a.orderId.localeCompare(b.orderId)));
       })
-      .catch((err) => setMessage("Failed to load orders: " + (err instanceof Error ? err.message : "Please try again.")));
-  };
+      .catch(err => { if (live) setLoadError("Could not load orders: " + errorText(err)); })
+      .finally(() => { if (live) setLoading(false); });
+    return () => { live = false; controller.abort(); };
+  }, [router, loadAttempt]);
 
   const handleExport = async () => {
-    const token = localStorage.getItem("token");
-    setMessage("Requesting export...");
-
+    if (exportInFlight.current) return;
+    exportInFlight.current = true;
+    setExporting(true);
+    setNotice({ kind: "info", text: "Preparing your CSV report..." });
     try {
-      const response = await fetch(
-        `${API}/api/orders/export/csv`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (!response.ok) {
-        const text = await response.text();
-        setMessage(`Export failed (${response.status}): ${text}`);
-        return;
-      }
-
+      const response = await fetch(`${API}/api/orders/export/csv`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      if (!response.ok) await readJson(response);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -89,46 +95,45 @@ export default function Dashboard() {
       document.body.appendChild(a);
       a.click();
       a.remove();
-      window.URL.revokeObjectURL(url);
-      setMessage("Export downloaded successfully.");
+      // Allow the browser to begin reading the file before releasing the URL.
+      window.setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+      setNotice({ kind: "success", text: "Your CSV report is ready. Check your browser's downloads." });
     } catch (err: unknown) {
-      setMessage("Export failed with exception: " + (err instanceof Error ? err.message : "Please try again."));
+      setNotice({ kind: "error", text: "Could not download the report: " + errorText(err) });
+    } finally {
+      exportInFlight.current = false;
+      setExporting(false);
     }
   };
 
   const updateStatus = async (orderId: string, newStatus: string) => {
-    const token = localStorage.getItem("token");
-    if (pending) return;
+    if (statusInFlight.current) return;
+    statusInFlight.current = true;
     setPending(orderId);
-    setMessage(`Updating ${orderId}...`);
-
+    setNotice({ kind: "info", text: `Updating ${orderId}. Please wait...` });
     try {
-      const response = await fetch(
-        `${API}/api/orders/${orderId}/status`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ status: newStatus }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage(`Order ${orderId} updated to ${newStatus}`);
-        setOrders(current => current.map(order => order.orderId === orderId ? {...order, status: newStatus} : order));
-      } else {
-        setMessage("Error: " + (data.message || JSON.stringify(data)));
-      }
+      const response = await fetch(`${API}/api/orders/${orderId}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      await readJson(response);
+      setOrders(current => current.map(order => order.orderId === orderId ? { ...order, status: newStatus } : order));
+      setNotice({ kind: "success", text: `Order ${orderId} updated to ${newStatus}.` });
     } catch (err: unknown) {
-      setMessage("Request failed: " + (err instanceof Error ? err.message : "Please try again."));
-    } finally { setPending(null); }
+      setNotice({ kind: "error", text: `Could not confirm the update for ${orderId}: ${errorText(err)} Refresh the orders before retrying if your connection was interrupted.` });
+    } finally {
+      statusInFlight.current = false;
+      setPending(null);
+      setCancelOrderId(null);
+    }
   };
 
   const isDispatcher = role === "DISPATCHER";
+  const filter = statusFilter || (isDispatcher ? "active" : "all");
   const activeStatuses = ["placed", "scheduled", "dispatched"];
   const visibleOrders = orders.filter(o => (filter === "all" || (filter === "active" ? activeStatuses.includes(o.status) : o.status === filter)) && `${o.orderId} ${o.customerName}`.toLowerCase().includes(search.toLowerCase())).sort((a, b) => isDispatcher ? a.deliveryDate.localeCompare(b.deliveryDate) || a.orderId.localeCompare(b.orderId) : b.placementDate.localeCompare(a.placementDate) || a.orderId.localeCompare(b.orderId));
   const cards: [string, number, string][] = isDispatcher
@@ -148,21 +153,25 @@ export default function Dashboard() {
           </div>
           {["ADMIN", "DISPATCHER"].includes(role) && <button
             onClick={handleExport}
+            disabled={exporting}
+            aria-busy={exporting}
             className="bg-slate-100 text-slate-700 text-sm font-medium rounded-lg px-4 py-2 hover:bg-slate-200 transition"
           >
-            Download Report (CSV)
+            {exporting ? <BusyLabel>Preparing CSV...</BusyLabel> : "Download Report (CSV)"}
           </button>}
         </div>
 
-        <div className="stats-grid">{cards.map(([label, value, status]) => <button type="button" style={{textAlign:"left", borderColor: filter === status ? "#b51f46" : undefined}} className="stat-card" key={label} aria-pressed={filter === status} onClick={() => setFilter(status)}><span>{label}</span><strong>{value}</strong></button>)}</div>
-        {!isDispatcher && role === "ADMIN" && <p className="mb-5 text-sm text-slate-600">Delivered order value: <strong>Rs. {orders.filter(o => o.status === "delivered").reduce((sum, o) => sum + Number(o.amount), 0).toLocaleString("en-LK", {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong> · CSV includes all orders, regardless of the current filter.</p>}
+        <div className="stats-grid">{cards.map(([label, value, status]) => <button type="button" style={{textAlign:"left", borderColor: filter === status ? "#b51f46" : undefined}} className="stat-card" disabled={loading || !!loadError} key={label} aria-pressed={filter === status} onClick={() => setFilter(status)}><span>{label}</span><strong>{loading || loadError ? "—" : value}</strong></button>)}</div>
+        {!loading && !loadError && !isDispatcher && role === "ADMIN" && <p className="mb-5 text-sm text-slate-600">Delivered order value: <strong>Rs. {orders.filter(o => o.status === "delivered").reduce((sum, o) => sum + Number(o.amount), 0).toLocaleString("en-LK", {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong> · CSV includes all orders, regardless of the current filter.</p>}
         <div className="table-tools"><input aria-label="Search orders" type="search" placeholder="Search order ID or customer" value={search} onChange={e => setSearch(e.target.value)} /><select aria-label="Filter order status" value={filter} onChange={e => setFilter(e.target.value)}>{["all", "active", "placed", "scheduled", "dispatched", "delivered", "cancelled"].map(s => <option value={s} key={s}>{s === "all" ? "All statuses" : s === "active" ? "Active orders" : s}</option>)}</select></div>
-        {message && (
-          <p role="status" className="notice">{message}</p>
-        )}
+        {loading && <LoadingState>Loading orders...</LoadingState>}
+        {loadError && <Notice kind="error">{loadError}<br /><button type="button" className="secondary-button" onClick={() => { setLoadError(""); setLoading(true); setLoadAttempt(value => value + 1); }}>Try again</button></Notice>}
+        {notice && <Notice kind={notice.kind}>{notice.text}</Notice>}
+        {!loading && !loadError && <>
+          <p className="mb-4 text-xs text-slate-500">Showing {visibleOrders.length} of {orders.length} orders. {isDispatcher ? "CSV exports all orders. Completed orders remain available through the status filter." : "Newest placement dates first."}</p>
+          {visibleOrders.length === 0 && <p className="empty-state">{orders.length === 0 ? "No orders have been placed yet." : "No orders match your search and status filter."}</p>}
+        </>}
 
-        <p className="mb-4 text-xs text-slate-500">Showing {visibleOrders.length} of {orders.length} orders. {isDispatcher ? "CSV exports all orders. Completed orders remain available through the status filter." : "Newest placement dates first."}</p>
-        {orders.length > 0 && visibleOrders.length === 0 && <p className="empty-state">No orders match your search and status filter.</p>}
         {visibleOrders.length > 0 && (
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
@@ -204,13 +213,14 @@ export default function Dashboard() {
                         defaultValue=""
                         onChange={(e) => {
                           if (e.target.value) {
-                            updateStatus(o.orderId, e.target.value);
+                            if (e.target.value === "cancelled") setCancelOrderId(o.orderId);
+                            else void updateStatus(o.orderId, e.target.value);
                             e.target.value = "";
                           }
                         }}
                         className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#a91d40]"
                       >
-                        <option value="">Change status...</option>
+                        <option value="">{pending === o.orderId ? "Updating..." : "Change status..."}</option>
                         {(o.status === "placed" ? ["scheduled", "cancelled"] :
                           o.status === "scheduled" ? ["dispatched", "cancelled"] :
                           o.status === "dispatched" ? ["delivered"] : []).map((s) => (
@@ -227,6 +237,9 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+      <CancelOrderDialog orderId={cancelOrderId} busy={pending !== null}
+        onKeep={() => setCancelOrderId(null)}
+        onConfirm={() => { if (cancelOrderId) void updateStatus(cancelOrderId, "cancelled"); }} />
     </div>
   );
 }
