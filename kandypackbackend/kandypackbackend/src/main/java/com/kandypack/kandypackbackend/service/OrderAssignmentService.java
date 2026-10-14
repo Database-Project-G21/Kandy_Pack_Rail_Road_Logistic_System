@@ -114,6 +114,14 @@ public class OrderAssignmentService {
                 rs.getTimestamp("departure_datetime").toLocalDateTime(),
                 rs.getTimestamp("arrival_datetime").toLocalDateTime(), rs.getBoolean("reservation_active")),
                 order.getOrderId()));
+        response.setDeliveries(jdbc.queryForList("""
+            SELECT d.dispatch_id,d.truck_id,t.plate_number,d.start_time,d.end_time,
+                   r.route_id,r.coverage_area,dr.driver_name,a.assistant_name
+            FROM order_dispatch od JOIN truck_dispatch d USING(dispatch_id)
+            JOIN truck t USING(truck_id) JOIN route r USING(route_id)
+            JOIN driver dr USING(driver_id) JOIN assistant a USING(assistant_id)
+            WHERE od.order_id=?
+            """,order.getOrderId()));
         return response;
     }
 }
