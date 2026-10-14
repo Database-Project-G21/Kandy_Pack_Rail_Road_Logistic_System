@@ -23,7 +23,7 @@ public class OrderRequest {
 
     @NotEmpty(message = "Order must contain at least one item")
     @Valid
-    private List<OrderItemRequest> items;
+    private List<@NotNull OrderItemRequest> items;
 
     public String getCustomerId() { return customerId; }
     public void setCustomerId(String customerId) { this.customerId = customerId; }
@@ -38,7 +38,7 @@ public class OrderRequest {
     public void setDeliveryDate(LocalDate deliveryDate) { this.deliveryDate = deliveryDate; }
 
     public List<OrderItemRequest> getItems() { return items; }
-    public void setItems(List<OrderItemRequest> items) { this.items = items; }
+    public void setItems(List<@NotNull OrderItemRequest> items) { this.items = items; }
 
     public static class OrderItemRequest {
 

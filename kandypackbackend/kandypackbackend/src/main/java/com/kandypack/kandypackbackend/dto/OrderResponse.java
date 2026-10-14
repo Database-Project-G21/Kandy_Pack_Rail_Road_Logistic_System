@@ -24,6 +24,10 @@ public class OrderResponse {
                                   java.time.LocalDateTime departure, java.time.LocalDateTime arrival,
                                   boolean active) {}
 
+    private java.util.List<java.util.Map<String,Object>> deliveries = java.util.List.of();
+    public java.util.List<java.util.Map<String,Object>> getDeliveries(){return deliveries;}
+    public void setDeliveries(java.util.List<java.util.Map<String,Object>> value){deliveries=value;}
+
     public OrderResponse(CustomerOrder order) {
         this.orderId = order.getOrderId();
         this.customerId = order.getCustomer().getCustomerId();
