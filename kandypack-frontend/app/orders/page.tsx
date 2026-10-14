@@ -11,6 +11,7 @@ interface Order {
   placementDate: string;
   deliveryDate: string;
   status: string;
+  deliveries?: { dispatch_id:string; plate_number:string; start_time:string; end_time:string; coverage_area:string }[];
   allocations?: { tripId: string; productId: string; productName: string; quantity: number; arrival: string; active: boolean }[];
 }
 
@@ -99,7 +100,9 @@ export default function OrderHistory() {
                     </td>
                     <td className="py-3 text-slate-600">Rs. {o.amount}</td>
                     <td className="py-3 text-slate-600">{o.placementDate}</td>
-                    <td className="py-3 text-slate-600">{o.deliveryDate}</td>
+                    <td className="py-3 text-slate-600">{o.deliveryDate}
+                      {o.deliveries?.map(d=><div key={d.dispatch_id} className="mt-2 text-xs">Truck: {d.plate_number}<br/>Area: {d.coverage_area}<br/>Planned departure: {String(d.start_time).replace("T"," ")}<br/>Planned finish: {String(d.end_time).replace("T"," ")}</div>)}
+                    </td>
                     <td className="py-3">
                       <span
                         className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
