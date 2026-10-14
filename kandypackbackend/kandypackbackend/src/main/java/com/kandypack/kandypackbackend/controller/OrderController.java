@@ -52,12 +52,9 @@ public class OrderController {
         csv.append("Order ID,Customer,Amount,Placement Date,Delivery Date,Status\n");
 
         for (CustomerOrder o : allOrders) {
-            csv.append(o.getOrderId()).append(",")
-                    .append(o.getCustomer().getCustomerName()).append(",")
-                    .append(o.getAmount()).append(",")
-                    .append(o.getPlacementDate()).append(",")
-                    .append(o.getDeliveryDate()).append(",")
-                    .append(o.getStatus()).append("\n");
+            csv.append(java.util.stream.Stream.of(o.getOrderId(),o.getCustomer().getCustomerName(),
+                    o.getAmount(),o.getPlacementDate(),o.getDeliveryDate(),o.getStatus())
+                    .map(OrderController::csvCell).collect(java.util.stream.Collectors.joining(","))).append("\r\n");
         }
 
         org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
@@ -90,6 +87,12 @@ public class OrderController {
             }
             return ResponseEntity.ok(orderAssignmentService.toResponse(order));
         }).orElse(ResponseEntity.notFound().build());
+    }
+
+    private static String csvCell(Object value) {
+        String text=value==null?"":value.toString();
+        if(!text.stripLeading().isEmpty() && "=+@-".indexOf(text.stripLeading().charAt(0))>=0)text="'"+text;
+        return "\""+text.replace("\"","\"\"")+"\"";
     }
 
     @PostMapping
