@@ -25,6 +25,7 @@ public class CustomerController {
                 .collect(Collectors.toList());
     }
 
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or (hasRole('CUSTOMER') and #id == authentication.name)")
     @GetMapping("/{id}")
     public ResponseEntity<CustomerResponse> getCustomerById(@PathVariable String id) {
         return customerRepository.findById(id)
