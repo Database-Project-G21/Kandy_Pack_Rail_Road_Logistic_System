@@ -21,7 +21,7 @@ export default function Login() {
     setBusy(true);
     setNotice({ kind: "info", text: "Signing in. Please wait..." });
     try {
-      const response = await fetch("http://localhost:8081/api/auth/login", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081"}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

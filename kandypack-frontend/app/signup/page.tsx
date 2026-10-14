@@ -34,7 +34,7 @@ export default function Signup() {
     setBusy(true);
     setNotice({ kind: "info", text: "Creating your account. Please wait..." });
     try {
-      const response = await fetch("http://localhost:8081/api/auth/signup", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081"}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ customerName, deliveryAddress, phoneNumber, email, password, cityId }),
