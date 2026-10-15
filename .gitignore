@@ -1,16 +1,14 @@
-# Local environment secrets
 .env
 .env.*
 !.env.example
-
-# Java / Maven build output
+**/node_modules/
+**/.next/
 **/target/
-
-# Frontend dependencies and build output
-node_modules/
-.next/
-out/
-build/
-
-# Local logs
+**/.idea/
+**/*.tsbuildinfo
+**/next-env.d.ts
 *.log
+*.zip
+*.dump
+/kandypack_latest.sql
+/database/kandypack_current_full.sql

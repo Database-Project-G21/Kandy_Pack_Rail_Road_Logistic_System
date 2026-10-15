@@ -4,3 +4,4 @@ node_modules
 .env*
 *.zip
 *.tsbuildinfo
+npm-debug.log*

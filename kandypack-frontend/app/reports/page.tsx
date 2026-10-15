@@ -14,7 +14,8 @@ export default function Reports(){
  const [busy,setBusy]=useState(false);const [error,setError]=useState("");const [loaded,setLoaded]=useState(false);
  useEffect(()=>{if(!["ADMIN","DISPATCHER"].includes(localStorage.getItem("role")||""))router.replace("/login");},[router]);
  async function load(e:React.FormEvent){e.preventDefault();setBusy(true);setError("");setLoaded(false);setRows([]);
-  try{const query=new URLSearchParams({year:String(year),quarter:String(quarter),month:String(month),week,customerId:customer});
+  try{const query=new URLSearchParams({
+    year:String(year),quarter:String(quarter),month:String(month),week,customerId:customer});
    const data=await fetch(`${API}/api/reports/${report}?${query}`,{headers:{Authorization:`Bearer ${localStorage.getItem("token")}`}}).then(readJson<Row[]>);
    if(!Array.isArray(data))throw new Error("Unexpected report response");setRows(data);setLoaded(true);
   }catch(e){setError(errorText(e));}finally{setBusy(false);}}

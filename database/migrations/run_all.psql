@@ -1,0 +1,13 @@
+\set ON_ERROR_STOP on
+BEGIN;
+SET LOCAL client_encoding = 'UTF8';
+SET LOCAL standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', true);
+\ir 01_enums.sql
+\ir 02_tables_and_indexes.sql
+\ir 03_functions.sql
+\ir 04_procedures.sql
+\ir 05_views_and_reports.sql
+\ir 06_foreign_keys.sql
+\ir 07_triggers.sql
+COMMIT;
