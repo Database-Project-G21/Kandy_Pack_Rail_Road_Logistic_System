@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+**/node_modules/
+**/.next/
+**/target/
+**/.idea/
+**/*.tsbuildinfo
+**/next-env.d.ts
+*.log
+*.zip
+*.dump
+/kandypack_latest.sql
+/database/kandypack_current_full.sql
